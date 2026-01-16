@@ -106,6 +106,8 @@ temp/
 
 # Supabase
 .supabase/
+supabase/.temp/
+supabase/config.toml
 
 # Google Cloud credentials (if using local service account)
 service-account-key.json

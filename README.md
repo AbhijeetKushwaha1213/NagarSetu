@@ -204,9 +204,32 @@ Contributions are welcome! Please follow these steps:
 
 This project is licensed under the MIT License.
 
-## 🐛 Known Issues
+## 🐛 Troubleshooting
 
-See the [Issues](https://github.com/your-repo/issues) page for known bugs and feature requests.
+### Worker Photo Upload Error
+If workers get "permission denied for table users" when uploading photos:
+
+**Quick Fix**: Run `QUICK_FIX_PHOTO_UPLOAD.md` script in Supabase SQL Editor
+
+**Full Guide**: See `docs/FIX_WORKER_PHOTO_UPLOAD.md` for detailed instructions
+
+**Diagnostic**: Run `DIAGNOSE_PERMISSION_ISSUE.sql` to identify the exact issue
+
+### Upvote Feature Not Working
+If upvotes are not persisting or not working correctly:
+
+**Quick Fix**: Run `QUICK_FIX_UPVOTES.md` - takes 3 steps, 2 minutes
+
+**Full Guide**: See `docs/FIX_UPVOTE_FEATURE.md` for detailed instructions
+
+**What it fixes**: Migrates from localStorage to proper database tracking
+
+### Other Common Issues
+- **Database schema errors**: Run the latest migration scripts in `docs/migration/`
+- **Authentication issues**: Check environment variables in `.env.local`
+- **Map not loading**: Verify Google Maps API key and billing is enabled
+
+See the [Issues](https://github.com/your-repo/issues) page for more known bugs and feature requests.
 
 ## 💬 Support
 

@@ -69,10 +69,27 @@ const IssueCard: React.FC<IssueCardProps> = ({
 
   // Check if user has upvoted this issue
   useEffect(() => {
-    if (currentUser) {
-      const userUpvotes = JSON.parse(localStorage.getItem('userUpvotes') || '[]');
-      setUpvoted(userUpvotes.includes(id));
-    }
+    const checkUpvoteStatus = async () => {
+      if (currentUser) {
+        try {
+          const { data, error } = await supabase
+            .from('user_upvotes')
+            .select('id')
+            .eq('issue_id', id)
+            .eq('user_id', currentUser.id)
+            .single();
+          
+          setUpvoted(!!data);
+        } catch (error) {
+          // User hasn't upvoted (no row found)
+          setUpvoted(false);
+        }
+      } else {
+        setUpvoted(false);
+      }
+    };
+    
+    checkUpvoteStatus();
   }, [id, currentUser]);
 
   // Update local count when prop changes
@@ -147,45 +164,35 @@ const IssueCard: React.FC<IssueCardProps> = ({
     setIsUpvoting(true);
 
     try {
-      const newUpvoteState = !upvoted;
-      const newCount = newUpvoteState ? currentUpvoteCount + 1 : currentUpvoteCount - 1;
-      
-      // Update database
-      const { error } = await supabase
-        .from('issues')
-        .update({ volunteers_count: newCount })
-        .eq('id', id);
+      // Use the database function to toggle upvote atomically
+      const { data, error } = await supabase.rpc('toggle_upvote', {
+        p_issue_id: id,
+        p_user_id: currentUser.id
+      });
 
       if (error) throw error;
 
+      // data returns: { upvoted: boolean, new_count: number }
+      const result = data[0];
+      
       // Update local state
-      setUpvoted(newUpvoteState);
-      setCurrentUpvoteCount(newCount);
+      setUpvoted(result.upvoted);
+      setCurrentUpvoteCount(result.new_count);
       
       // Update parent component if callback provided
       if (onUpvoteUpdate) {
-        onUpvoteUpdate(id, newCount);
+        onUpvoteUpdate(id, result.new_count);
       }
-      
-      // Store user's upvote in localStorage
-      const userUpvotes = JSON.parse(localStorage.getItem('userUpvotes') || '[]');
-      if (newUpvoteState) {
-        userUpvotes.push(id);
-      } else {
-        const index = userUpvotes.indexOf(id);
-        if (index > -1) userUpvotes.splice(index, 1);
-      }
-      localStorage.setItem('userUpvotes', JSON.stringify(userUpvotes));
       
       toast({
-        title: newUpvoteState ? "Issue upvoted!" : "Upvote removed",
-        description: newUpvoteState ? "Thanks for supporting this issue!" : "You removed your upvote",
+        title: result.upvoted ? "Issue upvoted!" : "Upvote removed",
+        description: result.upvoted ? "Thanks for supporting this issue!" : "You removed your upvote",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating upvote:', error);
       toast({
         title: "Error",
-        description: "Failed to update upvote",
+        description: error.message || "Failed to update upvote",
         variant: "destructive",
       });
     } finally {

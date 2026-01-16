@@ -81,7 +81,7 @@ const IssueDetail = () => {
       if (error) throw error;
       
       setIssue(data);
-      setUpvoteCount(data.volunteers_count || 0);
+      setUpvoteCount(data.upvotes_count || data.volunteers_count || 0);
       setViewCount(data.view_count || 0);
       
       // Increment view count only on first load
@@ -89,10 +89,17 @@ const IssueDetail = () => {
         await incrementViewCount();
       }
       
-      // Check if user has upvoted (you can implement this with a separate table)
-      // For now, we'll use localStorage as a simple solution
-      const userUpvotes = JSON.parse(localStorage.getItem('userUpvotes') || '[]');
-      setUpvoted(userUpvotes.includes(id));
+      // Check if user has upvoted using database
+      if (currentUser) {
+        const { data: upvoteData } = await supabase
+          .from('user_upvotes')
+          .select('id')
+          .eq('issue_id', id)
+          .eq('user_id', currentUser.id)
+          .single();
+        
+        setUpvoted(!!upvoteData);
+      }
       
     } catch (error) {
       console.error('Error fetching issue:', error);
@@ -155,7 +162,7 @@ const IssueDetail = () => {
         (payload) => {
           console.log('Real-time update:', payload);
           if (payload.new) {
-            setUpvoteCount(payload.new.volunteers_count || 0);
+            setUpvoteCount(payload.new.upvotes_count || payload.new.volunteers_count || 0);
             setViewCount(payload.new.view_count || 0);
           }
         }
@@ -179,34 +186,24 @@ const IssueDetail = () => {
     }
 
     try {
-      const newUpvoteState = !upvoted;
-      const newCount = newUpvoteState ? upvoteCount + 1 : upvoteCount - 1;
-      
-      // Update database
-      const { error } = await supabase
-        .from('issues')
-        .update({ volunteers_count: newCount })
-        .eq('id', id);
+      // Use the database function to toggle upvote atomically
+      const { data, error } = await supabase.rpc('toggle_upvote', {
+        p_issue_id: id,
+        p_user_id: currentUser.id
+      });
 
       if (error) throw error;
 
-      // Update local state
-      setUpvoted(newUpvoteState);
-      setUpvoteCount(newCount);
+      // data returns: { upvoted: boolean, new_count: number }
+      const result = data[0];
       
-      // Store user's upvote in localStorage (in production, use a proper user_upvotes table)
-      const userUpvotes = JSON.parse(localStorage.getItem('userUpvotes') || '[]');
-      if (newUpvoteState) {
-        userUpvotes.push(id);
-      } else {
-        const index = userUpvotes.indexOf(id);
-        if (index > -1) userUpvotes.splice(index, 1);
-      }
-      localStorage.setItem('userUpvotes', JSON.stringify(userUpvotes));
+      // Update local state
+      setUpvoted(result.upvoted);
+      setUpvoteCount(result.new_count);
       
       toast({
-        title: newUpvoteState ? "Issue upvoted!" : "Upvote removed",
-        description: newUpvoteState ? "Thanks for supporting this issue!" : "You removed your upvote",
+        title: result.upvoted ? "Issue upvoted!" : "Upvote removed",
+        description: result.upvoted ? "Thanks for supporting this issue!" : "You removed your upvote",
       });
     } catch (error) {
       console.error('Error updating upvote:', error);
