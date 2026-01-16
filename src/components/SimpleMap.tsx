@@ -17,7 +17,7 @@ interface SimpleMapProps {
   onIssueSelect?: (issue: Issue) => void;
 }
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyD7nJAmr4M4-qfzUQtubXAgWpc1P4ATh9E';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyD7nJAmr4M4-qfzUQtubXAgWpc1P4ATh9E';
 
 // Enhanced color mapping for unresolved issues with urgency indicators
 const getUrgencyColor = (priority: string, status: string, daysSinceCreated: number) => {
