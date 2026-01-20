@@ -31,7 +31,7 @@ const FeaturedIssue: React.FC<FeaturedIssueProps> = ({
         <img 
           src={image} 
           alt={title} 
-          className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-2000 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
       </div>
