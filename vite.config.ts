@@ -6,8 +6,22 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
+    host: '0.0.0.0', // Bind to all IPv4 interfaces
     port: 8080,
+    strictPort: false,
+    cors: true, // Enable CORS
+    hmr: {
+      port: 8080, // Use same port for HMR
+    },
+    // Add proxy for potential API issues
+    proxy: {
+      // If you have any API routes that need proxying
+    },
+  },
+  // Ensure environment variables are properly loaded
+  define: {
+    // Explicitly define env vars if needed
+    __DEV__: mode === 'development',
   },
   plugins: [
     react(),
