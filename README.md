@@ -1,4 +1,4 @@
-# Civic Connect - Municipal Issue Reporting Platform
+# NagarSetu-Civic Issue Reporting Platform
 
 A modern, full-stack web application for citizens to report municipal issues and for authorities to manage and resolve them efficiently.
 
